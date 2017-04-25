@@ -1,7 +1,7 @@
 # TP_XML-CSharp
 
 
-This small Application creates C# / Simpl # classes for use in a Simpl# Pro Project
+This small Console Application creates C# / Simpl # classes for use in a Simpl# Pro Project
 
 
 
