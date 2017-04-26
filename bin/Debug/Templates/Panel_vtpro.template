@@ -1,0 +1,652 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Globalization;
+
+using Crestron.SimplSharp;
+
+using Crestron.SimplSharpPro;
+
+using VTPro;
+using VTPro.Objects;
+using VTPro.SmartObjects;
+using VTPro.Panels;
+
+using $$addnamespace$$.Methods;
+using $$addnamespace$$.Drivers;
+using $$addnamespace$$.SmartObjects;
+
+using Crestron.ThirdPartyCommon.Interfaces;
+
+using $$addnamespace$$.Constants;
+
+namespace $$addnamespace$$
+{
+    public class Panel : BasePanel
+    {
+        public Panel(ControlSystem ControlSystem, uint ID, PanelType Type)
+            : base(ControlSystem, ID, Type)
+        {
+            this.ControlSystem = ControlSystem;
+
+            ButtonCollection = new VTBCollection();
+            FormattedTextCollection = new VTBCollection();
+            SliderCollection = new VTBCollection();
+            TextEntryCollection = new VTBCollection();
+            SmartObjectCollection = new VTSCollection();
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+			$$addclassinitializations$$
+            
+            AddObjects();
+
+            //SetDefaultStates();
+        }
+
+        public override void HandleEvent(SigEventArgs Args)
+        {
+            switch (Args.Sig.Type)
+            {
+                case eSigType.Bool:
+                    if (Args.Sig.BoolValue)
+                    {
+                        if (Pages.GetElement(Args.Sig.Number) != null)
+                        {
+                            Pages.FlipTo(Args.Sig.Number);
+                        }
+
+                        if (Subpages.GetElement(Args.Sig.Number) != null)
+                        {
+                            Subpages.FlipTo(Args.Sig.Number);
+                        }
+                    }
+                    if (ButtonCollection.GetElement(VTBJoin.Digital, Args.Sig.Number) != null)
+                    {
+                        ButtonCollection.GetElement(VTBJoin.Digital, Args.Sig.Number).TriggerAction(VTBAction.PressButton, Args.Sig.BoolValue);
+                    }
+
+                    break;
+                case eSigType.UShort:
+                    if (SliderCollection.GetElement(VTBJoin.Analog, Args.Sig.Number) != null)
+                    {
+                        SliderCollection.GetElement(VTBJoin.Analog, Args.Sig.Number).TriggerAction(VTBAction.SetValue, Args.Sig.UShortValue);
+                    }
+                    break;
+                case eSigType.String:
+                    if (TextEntryCollection.GetElement(VTBJoin.Serial, Args.Sig.Number) != null)
+                    {
+                        TextEntryCollection.GetElement(VTBJoin.Serial, Args.Sig.Number).TriggerAction(VTBAction.GatherTextInput, Args.Sig.StringValue);
+                    }
+                    break;
+            }
+        }
+
+        private void AddObjects()
+        {
+            //Page/SubPages
+            AddPages();
+            AddSubpages();
+
+            //Objects
+            AddFormattedText();
+            AddSliders();
+            AddButtons();
+            AddTextEntry();
+        }
+
+        private void AddPages()
+        {
+            $$addpages$$
+        }
+
+        private void AddSubpages()
+        {
+            $$addsubpages$$
+        }
+
+        private void AddTextEntry()
+        {
+           $$addtextentry$$
+        }
+
+        private void AddFormattedText()
+        {
+            $$addformattedtext$$
+        }
+
+        private void AddSliders()
+        {
+           $$addsliders$$
+        }
+
+        private void AddButtons()
+        {
+			// Two constructors exsist for VTButton
+			// The creator creates the non interlock version for all buttons 
+			// If you want some buttons to be interlocked the change the button constructor and create an Interlock List for your group.	
+			// 
+			//   VTButton(this, Dictionary<VTBJoin, uint> ,InterlockList, name , Callback));
+		    //	 List<VTButton> InterlockList = new List<VTButton>();
+			
+        
+           $$addbuttons$$
+        }   
+
+        public override void InitializeSmartObjects()
+        {
+			
+		
+			 List<string> TempList = new List<string>();
+           $$addsmartobjects$$
+        }
+
+        private bool CheckSmartObject(uint ID)
+        {
+            return ExtendedInterface.SmartObjects.Contains(ID);
+        }
+/*
+        public void SetDefaultStates()
+        {
+            //Display Settings
+            TextEntryCollection.GetElement("TCP/IP Display IP Address").TriggerAction(VTBAction.SetIndirectText, "0.0.0.0");
+            TextEntryCollection.GetElement("TCP/IP CableBox IP Address").TriggerAction(VTBAction.SetIndirectText, "0.0.0.0");
+            TextEntryCollection.GetElement("TCP/IP VideoServer IP Address").TriggerAction(VTBAction.SetIndirectText, "0.0.0.0");
+            TextEntryCollection.GetElement("TCP/IP BlurayPlayer IP Address").TriggerAction(VTBAction.SetIndirectText, "0.0.0.0");
+
+            FormattedTextCollection.GetElement("DisplayHeader").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("CableBox ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("VideoServer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("BlurayPlayer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+        }
+
+        public void SetVideoServerSupports()
+        {
+            if (ControlSystem._videoServer == null)
+            {
+                return;
+            }
+            IBasicVideoServer videoServer = ControlSystem._videoServer;
+
+            videoServer.CustomLogger = VideoServerLogOut;
+            videoServer.RxOut += VideoServerRxOut;
+
+            #region Header
+            if (videoServer.Description.Contains("Generic IR"))
+            {
+                FormattedTextCollection.GetElement("VideoServer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "IR Port Ready");
+            }
+            else
+            {
+                FormattedTextCollection.GetElement("VideoServer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, videoServer.Connected ? "Connected" : "Disconnected");
+            }
+            #endregion
+
+            #region Transport
+            ButtonCollection.GetElement("VideoServer Pause").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsPause);
+            ButtonCollection.GetElement("VideoServer Rewind").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsReverseScan);
+            ButtonCollection.GetElement("VideoServer Forward").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsForwardScan);
+            ButtonCollection.GetElement("VideoServer Play").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsPlay);
+            ButtonCollection.GetElement("VideoServer Repeat").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsRepeat);
+            ButtonCollection.GetElement("VideoServer Next").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsForwardSkip);
+            ButtonCollection.GetElement("VideoServer Previous").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsReverseSkip);
+            ButtonCollection.GetElement("VideoServer Stop").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsStop);
+
+            SmartObjectCollection.GetElement("VideoServer Control DPad").TriggerAction(VTSAction.SetEnabledState, videoServer.SupportsArrowKeys);
+
+            ButtonCollection.GetElement("VideoServer Home").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsHome);
+            ButtonCollection.GetElement("VideoServer Back").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsBack);
+            ButtonCollection.GetElement("VideoServer Clear").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsClear);
+            ButtonCollection.GetElement("VideoServer Return").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsReturn);
+            ButtonCollection.GetElement("VideoServer Menu").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsMenu);
+            ButtonCollection.GetElement("VideoServer Exit").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsExit);
+            ButtonCollection.GetElement("VideoServer Backspace").TriggerAction(VTBAction.SetEnableState, videoServer.SupportsKeypadBackSpace);
+
+            SmartObjectCollection.GetElement("VideoServer Control Keypad").TriggerAction(VTSAction.SetEnabledState, videoServer.SupportsKeypadNumber);
+            #endregion
+
+            #region Info
+            FormattedTextCollection.GetElement("VideoServer Description").TriggerAction(VTBAction.SetIndirectText, videoServer.Description);
+            FormattedTextCollection.GetElement("VideoServer GUID").TriggerAction(VTBAction.SetIndirectText, videoServer.Guid.ToString());
+            FormattedTextCollection.GetElement("VideoServer Manufacturer").TriggerAction(VTBAction.SetIndirectText, videoServer.Manufacturer);
+            FormattedTextCollection.GetElement("VideoServer Version").TriggerAction(VTBAction.SetIndirectText, videoServer.Version);
+            FormattedTextCollection.GetElement("VideoServer VersionDate").TriggerAction(VTBAction.SetIndirectText, videoServer.VersionDate.ToString());
+            FormattedTextCollection.GetElement("VideoServer SupportsFeedback").TriggerAction(VTBAction.SetIndirectText, videoServer.SupportsFeedback.ToString());
+
+            if (ControlSystem._videoServer.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("VideoServer EnableLogging").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("VideoServer DisableLogging").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("VideoServer EnableLogging").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("VideoServer DisableLogging").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            ButtonCollection.GetElement("VideoServer DisableLogging").TriggerAction(VTBAction.PressButton, true);
+            #endregion
+
+            #region Advanced
+            if (videoServer.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("VideoServer EnableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("VideoServer DisableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("VideoServer EnableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("VideoServer DisableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            ButtonCollection.GetElement("VideoServer DisableRxOut").TriggerAction(VTBAction.PressButton, true);
+            #endregion
+        }
+
+        public void SetCableBoxSupports()
+        {
+            if (ControlSystem._cableBox == null)
+            {
+                return;
+            }
+
+            IBasicCableBox cableBox = ControlSystem._cableBox;
+
+            ControlSystem._cableBox.CustomLogger = CableBoxLogOut;
+            ControlSystem._cableBox.RxOut += CableBoxRxOut;
+
+            #region Header
+            if (ControlSystem._cableBox.Description.Contains("Generic IR"))
+            {
+                FormattedTextCollection.GetElement("CableBox ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "IR Port Ready");
+            }
+            else
+            {
+                FormattedTextCollection.GetElement("CableBox ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, cableBox.Connected ? "Connected" : "Disconnected");
+            }
+            #endregion
+
+            #region Transport/left
+            ButtonCollection.GetElement("CableBox Pause").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsPause);
+            ButtonCollection.GetElement("CableBox Rewind").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsReverseScan);
+            ButtonCollection.GetElement("CableBox Forward").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsForwardScan);
+            ButtonCollection.GetElement("CableBox Play").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsPlay);
+            ButtonCollection.GetElement("CableBox Repeat").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsRepeat);
+            ButtonCollection.GetElement("CableBox Next").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsForwardSkip);
+            ButtonCollection.GetElement("CableBox Record").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsRecord);
+            ButtonCollection.GetElement("CableBox Live").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsLive);
+
+            FormattedTextCollection.GetElement("CableBox Volume").TriggerAction(VTBAction.SetVisibilityState, cableBox.SupportsVolumePercentFeedback);
+            FormattedTextCollection.GetElement("CableBox Channel").TriggerAction(VTBAction.SetVisibilityState, cableBox.SupportsChannelFeedback);
+
+            FormattedTextCollection.GetElement("CableBox Volume").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("CableBox Channel").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+
+            ButtonCollection.GetElement("CableBox VolumeUp").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsChangeVolume);
+            ButtonCollection.GetElement("CableBox VolumeDown").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsChangeVolume);
+            ButtonCollection.GetElement("CableBox ChannelUp").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsChangeChannel);
+            ButtonCollection.GetElement("CableBox ChannelDown").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsChangeChannel);
+
+            SmartObjectCollection.GetElement("CableBox Control DPad").TriggerAction(VTSAction.SetEnabledState, cableBox.SupportsArrowKeys);
+            #endregion
+
+            #region Transport/right
+            ButtonCollection.GetElement("CableBox Yellow").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsColorButtons);
+            ButtonCollection.GetElement("CableBox Blue").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsColorButtons);
+            ButtonCollection.GetElement("CableBox Red").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsColorButtons);
+            ButtonCollection.GetElement("CableBox Green").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsColorButtons);
+
+            ButtonCollection.GetElement("CableBox Power On").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsDiscretePower);
+            ButtonCollection.GetElement("CableBox Power Off").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsDiscretePower);
+            ButtonCollection.GetElement("CableBox Power Toggle").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsTogglePower);
+
+            ButtonCollection.GetElement("CableBox Home").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsHome);
+            ButtonCollection.GetElement("CableBox Back").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsBack);
+            ButtonCollection.GetElement("CableBox Clear").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsClear);
+            ButtonCollection.GetElement("CableBox Info").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsInfo);
+            ButtonCollection.GetElement("CableBox Return").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsReturn);
+            ButtonCollection.GetElement("CableBox Guide").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsGuide);
+            ButtonCollection.GetElement("CableBox Menu").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsMenu);
+            ButtonCollection.GetElement("CableBox Favorite").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsFavorite);
+            ButtonCollection.GetElement("CableBox Exit").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsExit);
+
+            SmartObjectCollection.GetElement("CableBox Control Keypad").TriggerAction(VTSAction.SetEnabledState, cableBox.SupportsKeypadNumber);
+            #endregion
+
+            #region Info
+            FormattedTextCollection.GetElement("CableBox Description").TriggerAction(VTBAction.SetIndirectText, cableBox.Description);
+            FormattedTextCollection.GetElement("CableBox GUID").TriggerAction(VTBAction.SetIndirectText, cableBox.Guid.ToString());
+            FormattedTextCollection.GetElement("CableBox Manufacturer").TriggerAction(VTBAction.SetIndirectText, cableBox.Manufacturer);
+            FormattedTextCollection.GetElement("CableBox Version").TriggerAction(VTBAction.SetIndirectText, cableBox.Version);
+            FormattedTextCollection.GetElement("CableBox VersionDate").TriggerAction(VTBAction.SetIndirectText, cableBox.VersionDate.ToString());
+            FormattedTextCollection.GetElement("CableBox SupportsFeedback").TriggerAction(VTBAction.SetIndirectText, cableBox.SupportsFeedback.ToString());
+
+            if (ControlSystem._cableBox.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("CableBox EnableLogging").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("CableBox DisableLogging").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("CableBox EnableLogging").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("CableBox DisableLogging").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            ButtonCollection.GetElement("CableBox DisableLogging").TriggerAction(VTBAction.PressButton, true);
+            #endregion
+
+            #region Advanced
+            SliderCollection.GetElement("CableBox WarmUpTime").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsWarmUpTime);
+            SliderCollection.GetElement("CableBox CoolDownTime").TriggerAction(VTBAction.SetEnableState, cableBox.SupportsCoolDownTime);
+
+            SliderCollection.GetElement("CableBox WarmUpTime").TriggerAction(VTBAction.UpdateValue, cableBox.WarmUpTime);
+            SliderCollection.GetElement("CableBox CoolDownTime").TriggerAction(VTBAction.UpdateValue, cableBox.CoolDownTime);
+
+            if (ControlSystem._cableBox.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("CableBox EnableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("CableBox DisableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("CableBox EnableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("CableBox DisableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            ButtonCollection.GetElement("CableBox DisableRxOut").TriggerAction(VTBAction.PressButton, true);
+            #endregion
+
+            #region Feedback
+            FormattedTextCollection.GetElement("CableBox PowerFb").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("CableBox MuteFb").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            FormattedTextCollection.GetElement("CableBox ChannelFb").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            #endregion
+        }
+
+        public void SetDisplaySupports()
+        {
+            if (ControlSystem._display == null)
+            {
+                return;
+            }
+
+            IBasicVideoDisplay display = ControlSystem._display;
+
+            display.CustomLogger = DisplayLogOut;
+            display.RxOut += DisplayRxOut;
+
+            #region Header
+            if (ControlSystem._display.Description.Contains("Generic IR"))
+            {
+                FormattedTextCollection.GetElement("DisplayHeader").TriggerAction(VTBAction.SetIndirectText, "IR Port Ready");
+            }
+            else
+            {
+                FormattedTextCollection.GetElement("DisplayHeader").TriggerAction(VTBAction.SetIndirectText, display.Connected ? "Connected" : "Disconnected");
+            }
+            #endregion
+
+            #region Info
+            FormattedTextCollection.GetElement("DisplayDescription").TriggerAction(VTBAction.SetIndirectText, display.Description);
+            FormattedTextCollection.GetElement("DisplayGUID").TriggerAction(VTBAction.SetIndirectText, display.Guid.ToString());
+            FormattedTextCollection.GetElement("DisplayManufacturer").TriggerAction(VTBAction.SetIndirectText, display.Manufacturer);
+            FormattedTextCollection.GetElement("DisplayVersion").TriggerAction(VTBAction.SetIndirectText, display.Version);
+            FormattedTextCollection.GetElement("DisplayVersionDate").TriggerAction(VTBAction.SetIndirectText, display.VersionDate.ToString(CultureInfo.InvariantCulture));
+            FormattedTextCollection.GetElement("DisplaySupportsFeedback").TriggerAction(VTBAction.SetIndirectText, display.SupportsFeedback.ToString());
+            #endregion
+
+            #region Control
+            //Valid input sources
+            for (uint i = 0; i < display.GetUsableInputs().Length; i++)
+            {
+                VTButton button = ButtonCollection.GetElement("DisplaySourceSelect" + i) as VTButton;
+                if (button != null)
+                {
+                    button.TriggerAction(VTBAction.SetFeedback, false);
+                    button.TriggerAction(VTBAction.SetEnableState, true);
+                    button.TriggerAction(VTBAction.SetIndirectText, display.GetUsableInputs()[i].InputType.ToString());
+                }
+            }
+
+            //Non-valid input sources
+            for (var i = (uint)display.GetUsableInputs().Length; i < 16; i++)
+            {
+                VTButton button = ButtonCollection.GetElement("DisplaySourceSelect" + i) as VTButton;
+                if (button != null)
+                {
+                    button.TriggerAction(VTBAction.SetEnableState, false);
+                    button.TriggerAction(VTBAction.SetIndirectText, String.Empty);
+                }
+            }
+
+            ButtonCollection.GetElement("DisplayPowerOff").TriggerAction(VTBAction.SetEnableState, display.SupportsDiscretePower);
+            ButtonCollection.GetElement("DisplayPowerOn").TriggerAction(VTBAction.SetEnableState, display.SupportsDiscretePower);
+            ButtonCollection.GetElement("DisplayPowerToggle").TriggerAction(VTBAction.SetEnableState, display.SupportsTogglePower);
+
+            ButtonCollection.GetElement("DisplayPowerOff").TriggerAction(VTBAction.SetFeedback, false);
+            ButtonCollection.GetElement("DisplayPowerOn").TriggerAction(VTBAction.SetFeedback, false);
+            ButtonCollection.GetElement("DisplayPowerToggle").TriggerAction(VTBAction.SetFeedback, false);
+
+            ButtonCollection.GetElement("DisplayMuteOff").TriggerAction(VTBAction.SetEnableState, display.SupportsDiscreteMute);
+            ButtonCollection.GetElement("DisplayMuteOn").TriggerAction(VTBAction.SetEnableState, display.SupportsDiscreteMute);
+            ButtonCollection.GetElement("DisplayMuteToggle").TriggerAction(VTBAction.SetEnableState, display.SupportsMute);
+
+            ButtonCollection.GetElement("DisplayMuteOff").TriggerAction(VTBAction.SetFeedback, false);
+            ButtonCollection.GetElement("DisplayMuteOn").TriggerAction(VTBAction.SetFeedback, false);
+            ButtonCollection.GetElement("DisplayMuteToggle").TriggerAction(VTBAction.SetFeedback, false);
+
+            SliderCollection.GetElement("DisplayVolume").TriggerAction(VTBAction.SetVisibilityState, display.SupportsVolumePercentFeedback);
+            SliderCollection.GetElement("DisplayVolume").TriggerAction(VTBAction.UpdateValue, (ushort)0);
+
+            ButtonCollection.GetElement("DisplayVolumeUp").TriggerAction(VTBAction.SetVisibilityState, display.SupportsChangeVolume);
+            ButtonCollection.GetElement("DisplayVolumeDown").TriggerAction(VTBAction.SetVisibilityState, display.SupportsChangeVolume);
+            #endregion
+
+            #region Settings
+            ButtonCollection.GetElement("DisplayDisconnect").TriggerAction(VTBAction.SetEnableState, display.SupportsDisconnect);
+            ButtonCollection.GetElement("DisplayReconnect").TriggerAction(VTBAction.SetEnableState, display.SupportsReconnect);
+            #endregion
+
+            #region Feedback
+            if (display.SupportsFeedback)
+            {//Feedback is supported
+                FormattedTextCollection.GetElement("DisplayPowerFeedback").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+                FormattedTextCollection.GetElement("DisplayMuteFeedback").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+                FormattedTextCollection.GetElement("DisplayInputFeedback").TriggerAction(VTBAction.SetIndirectText, "Unknown");
+            }
+            else
+            {//Feedback is not supported
+                FormattedTextCollection.GetElement("DisplayPowerFeedback").TriggerAction(VTBAction.SetIndirectText, "Not supported");
+                FormattedTextCollection.GetElement("DisplayMuteFeedback").TriggerAction(VTBAction.SetIndirectText, "Not supported");
+                FormattedTextCollection.GetElement("DisplayInputFeedback").TriggerAction(VTBAction.SetIndirectText, "Not supported");
+            }
+            #endregion
+
+            #region Advanced
+            FormattedTextCollection.GetElement("DisplayCoolDownTime").TriggerAction(VTBAction.SetIndirectText, display.CoolDownTime.ToString());
+            FormattedTextCollection.GetElement("DisplayWarmUpTime").TriggerAction(VTBAction.SetIndirectText, display.CoolDownTime.ToString());
+
+            SliderCollection.GetElement("DisplaySetWarmUpTime").TriggerAction(VTBAction.SetEnableState, display.SupportsWarmUpTime);
+            SliderCollection.GetElement("DisplaySetCoolDownTime").TriggerAction(VTBAction.SetEnableState, display.SupportsCoolDownTime);
+
+            SliderCollection.GetElement("DisplaySetWarmUpTime").TriggerAction(VTBAction.UpdateValue, display.WarmUpTime);
+            SliderCollection.GetElement("DisplaySetCoolDownTime").TriggerAction(VTBAction.UpdateValue, display.CoolDownTime);
+
+            if (!ControlSystem._display.Description.Contains("Crestron Generic IR Display Driver"))
+            {//RX Out and logging enabled since this is not an IR driver
+                ButtonCollection.GetElement("DisplayDisableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("DisplayDisableLogging").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("DisplayEnableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("DisplayEnableLogging").TriggerAction(VTBAction.SetEnableState, true);
+
+
+                ButtonCollection.GetElement("DisplayDisableRxOut").TriggerAction(VTBAction.PressButton, true);
+                ButtonCollection.GetElement("DisplayDisableLogging").TriggerAction(VTBAction.PressButton, true);
+            }
+            else
+            {//IR drivers do not support RX Out or Logging
+                ButtonCollection.GetElement("DisplayDisableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("DisplayDisableLogging").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("DisplayEnableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("DisplayEnableLogging").TriggerAction(VTBAction.SetEnableState, false);
+
+                FormattedTextCollection.GetElement("DisplayLog").TriggerAction(VTBAction.SetIndirectText, "Not supported");
+                FormattedTextCollection.GetElement("DisplayRxOut").TriggerAction(VTBAction.SetIndirectText, "Not supported");
+            }
+
+            #endregion
+        }
+
+        public void SetBlurayPlayerSupports()
+        {
+            if (ControlSystem._blurayPlayer == null)
+            {
+                return;
+            }
+
+            IBasicBlurayPlayer blurayPlayer = ControlSystem._blurayPlayer;
+
+            ControlSystem._blurayPlayer.CustomLogger = BlurayPlayerLogOut;
+            ControlSystem._blurayPlayer.RxOut += BlurayPlayerRxOut;
+
+            #region Header
+            if (ControlSystem._blurayPlayer.Description.Contains("Generic IR"))
+            {
+                FormattedTextCollection.GetElement("BlurayPlayer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, "IR Port Ready");
+            }
+            else
+            {
+                FormattedTextCollection.GetElement("BlurayPlayer ConnectionStatus").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.Connected ? "Connected" : "Disconnected");
+            }
+            #endregion
+
+            #region Info
+            FormattedTextCollection.GetElement("BlurayPlayer Description").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.Description);
+            FormattedTextCollection.GetElement("BlurayPlayer GUID").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.Guid.ToString());
+            FormattedTextCollection.GetElement("BlurayPlayer Manufacturer").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.Manufacturer);
+            FormattedTextCollection.GetElement("BlurayPlayer Version").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.Version);
+            FormattedTextCollection.GetElement("BlurayPlayer VersionDate").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.VersionDate.ToString());
+            FormattedTextCollection.GetElement("BlurayPlayer SupportsFeedback").TriggerAction(VTBAction.SetIndirectText, blurayPlayer.SupportsFeedback.ToString());
+
+            if (ControlSystem._blurayPlayer.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("BlurayPlayer EnableLogging").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("BlurayPlayer DisableLogging").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("BlurayPlayer EnableLogging").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("BlurayPlayer DisableLogging").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            #endregion
+
+            #region Advanced
+
+            if (ControlSystem._blurayPlayer.Description.Contains("Generic IR"))
+            {
+                ButtonCollection.GetElement("BlurayPlayer EnableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+                ButtonCollection.GetElement("BlurayPlayer DisableRxOut").TriggerAction(VTBAction.SetEnableState, false);
+            }
+            else
+            {
+                ButtonCollection.GetElement("BlurayPlayer EnableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+                ButtonCollection.GetElement("BlurayPlayer DisableRxOut").TriggerAction(VTBAction.SetEnableState, true);
+            }
+
+            ButtonCollection.GetElement("BlurayPlayer DisableRxOut").TriggerAction(VTBAction.PressButton, true);
+
+            FormattedTextCollection.GetElement("BlurayPlayer PlaybackStatus").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsPlayBackStatusFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer TrackFeedback").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsTrackFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer ChapterFeedback").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsChapterFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer TrackElapsedTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsTrackElapsedTimeFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer TrackRemainingTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsTotalRemainingTimeFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer ChapterElapsedTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsChapterElapsedTimeFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer ChapterRemainingTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsChapterRemainingTimeFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer TotalElapsedTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsTotalElapsedTimeFeedback);
+            FormattedTextCollection.GetElement("BlurayPlayer TotalRemainingTime").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsTotalRemainingTimeFeedback);
+
+            #endregion
+
+            #region Transport Controls
+
+            ButtonCollection.GetElement("BlurayPlayer ReverseScan").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsReverseScan);
+            ButtonCollection.GetElement("BlurayPlayer ReverseSkip").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsReverseSkip);
+            ButtonCollection.GetElement("BlurayPlayer ForwardSkip").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsForwardScan);
+            ButtonCollection.GetElement("BlurayPlayer ForwardScan").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsForwardSkip);
+            ButtonCollection.GetElement("BlurayPlayer Play").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsPlay);
+            ButtonCollection.GetElement("BlurayPlayer Pause").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsPause);
+            ButtonCollection.GetElement("BlurayPlayer Stop").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsStop);
+            ButtonCollection.GetElement("BlurayPlayer Audio").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsAudio);
+            ButtonCollection.GetElement("BlurayPlayer Display").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsDisplay);
+            ButtonCollection.GetElement("BlurayPlayer Menu").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsMenu);
+            ButtonCollection.GetElement("BlurayPlayer Repeat").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsRepeat);
+            ButtonCollection.GetElement("BlurayPlayer Return").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsReturn);
+            ButtonCollection.GetElement("BlurayPlayer Exit").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsExit);
+            ButtonCollection.GetElement("BlurayPlayer Back").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsBack);
+            ButtonCollection.GetElement("BlurayPlayer Eject").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsEject);
+            ButtonCollection.GetElement("BlurayPlayer Subtitle").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsSubtitle);
+            ButtonCollection.GetElement("BlurayPlayer Options").TriggerAction(VTBAction.SetEnableState, blurayPlayer.SupportsOptions);
+
+            SmartObjectCollection.GetElement("BlurayPlayer Control DPad").TriggerAction(VTSAction.SetEnabledState, blurayPlayer.SupportsArrowKeys);
+            SmartObjectCollection.GetElement("BlurayPlayer Keypad").TriggerAction(VTSAction.SetEnabledState, blurayPlayer.SupportsKeypadNumber);
+
+            #endregion
+        }
+
+        private void DisplayLogOut(string message)
+        {
+            FormattedTextCollection.GetElement("DisplayLog").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("Message={0}", message);
+        }
+
+        private void DisplayRxOut(string message)
+        {
+            FormattedTextCollection.GetElement("DisplayRxOut").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("RxOutMessage={0}", message);
+        }
+
+        private void CableBoxLogOut(string message)
+        {
+            FormattedTextCollection.GetElement("CableBox Log").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("Message={0}", message);
+        }
+
+        private void CableBoxRxOut(string message)
+        {
+            FormattedTextCollection.GetElement("CableBox RxOut").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("RxOutMessage={0}", message);
+        }
+
+        private void VideoServerLogOut(string message)
+        {
+            FormattedTextCollection.GetElement("VideoServer Log").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("Message={0}", message);
+        }
+
+        private void VideoServerRxOut(string message)
+        {
+            FormattedTextCollection.GetElement("VideoServer RxOut").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("RxOutMessage={0}", message);
+        }
+
+        private void BlurayPlayerLogOut(string message)
+        {
+            FormattedTextCollection.GetElement("BlurayPlayer Log").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("Message={0}", message);
+        }
+
+        private void BlurayPlayerRxOut(string message)
+        {
+            FormattedTextCollection.GetElement("BlurayPlayer RxOut").TriggerAction(VTBAction.SetIndirectText, message);
+            CrestronConsole.PrintLine("RxOutMessage={0}", message);
+        }
+*/
+        public ControlSystem ControlSystem { get; private set; }
+
+        $$addclassdeclarations$$
+    }
+}

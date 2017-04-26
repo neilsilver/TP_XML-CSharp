@@ -1,0 +1,307 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+using Crestron.SimplSharp;
+using Crestron.SimplSharpPro;
+
+using Crestron.ThirdPartyCommon.Interfaces;
+using Crestron.ThirdPartyCommon.ComponentInterfaces;
+
+using VTPro.Objects;
+using VTPro.SmartObjects;
+
+using $$addnamespace$$.Drivers;
+
+namespace $$addnamespace$$.SmartObjects
+{
+    public class VTS$$addnamespace$$Methods
+    {
+        public VTS$$addnamespace$$Methods(ControlSystem ControlSystem, Panel Panel)
+        {
+            this.ControlSystem = ControlSystem;
+            this.Panel = Panel;
+        }
+
+        public void TransportDPad(VTSmartObject SmartObject, DPadButton Button, bool IsPressed)
+        {
+            if (ControlSystem._blurayPlayer == null)
+            {
+                return;
+            }
+
+            switch (Button)
+            {
+                case DPadButton.Center:
+                    if (IsPressed)
+                    {
+                        ControlSystem._blurayPlayer.Enter();
+                    }
+                    break;
+
+                case DPadButton.Down:
+                    if (IsPressed)
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Down, CommandAction.Hold);
+                    }
+                    else
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Down, CommandAction.Release);
+                    }
+                    break;
+
+                case DPadButton.Left:
+                    if (IsPressed)
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Left, CommandAction.Hold);
+                    }
+                    else
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Left, CommandAction.Release);
+                    }
+                    break;
+
+                case DPadButton.Right:
+                    if (IsPressed)
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Right, CommandAction.Hold);
+                    }
+                    else
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Right, CommandAction.Release);
+                    }
+                    break;
+
+                case DPadButton.Up:
+                    if (IsPressed)
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Up, CommandAction.Hold);
+                    }
+                    else
+                    {
+                        ControlSystem._blurayPlayer.ArrowKey(ArrowDirections.Up, CommandAction.Release);
+                    }
+                    break;
+            }
+        }
+
+        public void TransportKeypad(VTSmartObject SmartObject, KeypadButton Button)
+        {
+            if (ControlSystem._blurayPlayer == null)
+            {
+                return;
+            }
+
+            switch (Button)
+            {
+                case KeypadButton.Misc_1:
+                    ControlSystem._blurayPlayer.Asterisk();
+                    break;
+
+                case KeypadButton.Num_0:
+                    ControlSystem._blurayPlayer.KeypadNumber(0);
+                    break;
+
+                case KeypadButton.Num_1:
+                    ControlSystem._blurayPlayer.KeypadNumber(1);
+                    break;
+
+                case KeypadButton.Num_2:
+                    ControlSystem._blurayPlayer.KeypadNumber(2);
+                    break;
+
+                case KeypadButton.Num_3:
+                    ControlSystem._blurayPlayer.KeypadNumber(3);
+                    break;
+
+                case KeypadButton.Num_4:
+                    ControlSystem._blurayPlayer.KeypadNumber(4);
+                    break;
+
+                case KeypadButton.Num_5:
+                    ControlSystem._blurayPlayer.KeypadNumber(5);
+                    break;
+
+                case KeypadButton.Num_6:
+                    ControlSystem._blurayPlayer.KeypadNumber(6);
+                    break;
+
+                case KeypadButton.Num_7:
+                    ControlSystem._blurayPlayer.KeypadNumber(7);
+                    break;
+
+                case KeypadButton.Num_8:
+                    ControlSystem._blurayPlayer.KeypadNumber(8);
+                    break;
+
+                case KeypadButton.Num_9:
+                    ControlSystem._blurayPlayer.KeypadNumber(9);
+                    break;
+
+                case KeypadButton.Misc_2:
+                    ControlSystem._blurayPlayer.Pound();
+                    break;
+
+                case KeypadButton.Null:
+                    break;
+            }
+        }
+
+        public void SubpageSelection(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            int joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+
+            switch (joinValue)
+            {
+                case 1:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Full");
+                    break;
+                case 2:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Info");
+                    break;
+                case 3:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Advanced");
+                    break;
+                case 4:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Feedback");
+                    break;
+                case 5:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Settings");
+
+                    break;
+            }
+        }
+
+        public void DriverTypeSelection(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            int joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+
+            switch (joinValue)
+            {
+                case 1:
+                    Panel.Subpages.FlipTo("BlurayPlayer - IR Drivers");
+                    break;
+                case 2:
+                    Panel.Subpages.FlipTo("BlurayPlayer - Serial Drivers");
+                    break;
+                case 3:
+                    Panel.Subpages.FlipTo("BlurayPlayer - TCPIP Drivers");
+                    break;
+            }
+        }
+
+        public void IRDriverPorts(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            if (Args.Sig.Type == eSigType.Bool && Args.Sig.BoolValue && Args.Sig.Name.Contains("Pressed"))
+            {
+                //Get item number selected and set the selected IR port to this value
+                int joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+
+                ControlSystem.GetSystem.IRDriverMapping.SelectedIRPort =
+                    Convert.ToUInt32(SmartObject.RetrieveObject(VTSRetrieve.ButtonText, joinValue));
+            }
+        }
+
+        public void IRDrivers(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            if (Args.Sig.Type == eSigType.Bool && Args.Sig.BoolValue && Args.Sig.Name.Contains("Pressed"))
+            {
+                int joinValue = 1;
+                try
+                {
+                    joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+                }
+                catch
+                { }
+
+                if (ControlSystem._blurayPlayer != null)
+                {
+                    ControlSystem._blurayPlayer.Dispose();
+                }
+
+                ControlSystem.GetSystem.IRDriverMapping.SelectedIRDriver =
+                    SmartObject.RetrieveObject(VTSRetrieve.ButtonText, joinValue) as string;
+            }
+        }
+
+        public void SerialDriverPorts(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            if (Args.Sig.Type == eSigType.Bool && Args.Sig.BoolValue && Args.Sig.Name.Contains("Pressed"))
+            {
+                //Get item number selected and set the selected IR port to this value
+                int joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+
+                ControlSystem.GetSystem.SerialDriverMapping.SelectedCOMPort =
+                    Convert.ToUInt32(SmartObject.RetrieveObject(VTSRetrieve.ButtonText, joinValue));
+            }
+        }
+
+        public void SerialDrivers(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            if (Args.Sig.Name.Contains("Pressed"))
+            {
+                int joinValue = 1;
+                try
+                {
+                    joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+                }
+                catch
+                { }
+
+                string driverDescriptionSelected = Convert.ToString(SmartObject.RetrieveObject(VTSRetrieve.ButtonText, joinValue));
+
+                if (DriverHelper.SerialBlurayPlayers.ContainsKey(driverDescriptionSelected))
+                {
+
+                    if (ControlSystem._blurayPlayer != null)
+                    {
+                        ControlSystem._blurayPlayer.Dispose();
+                    }
+
+                    //Get the driver object, assign an ID, and signal the control system to connect to it
+                    IBasicBlurayPlayer newDriver =
+                        DriverHelper.GetBlurayPlayer(DriverHelper.SerialBlurayPlayers[driverDescriptionSelected]);
+                    newDriver.Id = 1;
+
+                    ControlSystem._blurayPlayer = newDriver;
+                }
+            }
+        }
+
+        public void TCPIPDrivers(VTSmartObject SmartObject, SmartObjectEventArgs Args)
+        {
+            if (Args.Sig.Name.Contains("Pressed"))
+            {
+                int joinValue = 1;
+                try
+                {
+                    joinValue = Int32.Parse(Regex.Match(Args.Sig.Name, @"\d+").Value);
+                }
+                catch
+                { }
+
+                string driverDescriptionSelected = Convert.ToString(SmartObject.RetrieveObject(VTSRetrieve.ButtonText, joinValue));
+
+                if (DriverHelper.TcpBlurayPlayers.ContainsKey(driverDescriptionSelected))
+                {
+                    if (ControlSystem._blurayPlayer != null)
+                    {
+                        ControlSystem._blurayPlayer.Dispose();
+                    }
+
+                    //Get the driver object, assign an ID, and signal the control system to connect to it
+                    IBasicBlurayPlayer newDriver =
+                        DriverHelper.GetBlurayPlayer(DriverHelper.TcpBlurayPlayers[driverDescriptionSelected]);
+                    newDriver.Id = 1;
+
+                    ControlSystem._blurayPlayer = newDriver;
+                }
+            }
+        }
+
+        public Panel Panel;
+        public ControlSystem ControlSystem;
+    }
+}

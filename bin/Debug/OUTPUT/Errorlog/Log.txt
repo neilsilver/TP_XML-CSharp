@@ -1,0 +1,8 @@
+
+System Built:26/04/2017,Namespace = myNamespace
+
+Build File Error List:
+
+
+Build Note:Error No smartObject ID found Page:35_DVR_Presets Control:Simple Keypad_1 
+Build Note:Error No smartObject ID found Page:36_Bluray_Main Control:Simple Keypad_1 
