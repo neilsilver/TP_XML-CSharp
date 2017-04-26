@@ -40,35 +40,55 @@ The method for controls are created empty although some have some commented hint
 
 The only functions that will do anything "out of the box" are pageflips and subpage flips.
 
-Buttons are created without any interlocks but a comment section explains the process of adding interlocks.
+Buttons are created without any interlocks but a comment section explains the process of adding interlocks to buttons.
 
-Smartobject Lists have interlocks enabled as default and all reference an empty List.
+Smartobject Lists have interlocks enabled as default and all reference an empty List of stings as a placeholder for initialisation.
 
-Unsupported smartobjects can be used but need to be manually implemented using the generic
+Unsupported smartobjects can be used but need to be manually implemented using the generic VTSmartObject 
 
-VTSmartObject 
-
-SUPPORT:
+SUPPORT: 
 -----------
 Control Types
 
 Buttons
-Sliders
+Sliders (Gauges)
 Formatted Texts
 Text Entry
 
 Smart Objects:
 
-
 KPad
 Dpad
 Dynamic Button Lists
+Dynamic Icon Lists
 
+NB: Unsupported items will prompt the user before the application exits. Unsupported items must be removed from the VTPro File before processing.
 
 Things to do:
 -----------
-Add other smart object support ( Dynamic Icon list exsists in the VTPro.dll)
 
-Others do not so implement with VTSmartObject
+Provide a methos for skipping unsupported controls
 
-remove reliance on sgd file.
+Add other smart object support will need to add classes, initialisation methods and update methods.
+
+remove reliance on sgd file?
+
+Port in it's entirity to Simpl# ? To allow Creation on the fly using common Function libraries?
+
+Change the Object List to make it ENUMS rather than Constants.
+
+
+TESTING:
+-----------
+Carried out testing using Crestron Market place vtp files Included in Testing ZIP.
+
+commercial_basic_rev2.08  and residential_sample_rev2.08
+
+
+
+CREDITS:
+-----------
+Crestron Dynamic Driver sdk
+
+Market place touchpanels:
+commercial_basic_rev2.08  and residential_sample_rev2.08
