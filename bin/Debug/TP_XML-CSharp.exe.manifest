@@ -59,17 +59,17 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>PcdE9RZmY4GVvGd/q+OO0m6DghA=</dsig:DigestValue>
+        <dsig:DigestValue>s/zjXewgRvvucWUN/6SKurHElw0=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
-  <file name="program_readme.txt" size="3320">
+  <file name="program_readme.txt" size="3322">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-      <dsig:DigestValue>vu5Ltfit2HHzSHGESt9xy3qMjqg=</dsig:DigestValue>
+      <dsig:DigestValue>q3CCIbaxesPryRKZgJPKdFx6Uds=</dsig:DigestValue>
     </hash>
   </file>
 </asmv1:assembly>
