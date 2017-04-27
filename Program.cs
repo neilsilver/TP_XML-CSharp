@@ -647,7 +647,7 @@ namespace TP_XML_CSharp
 
                                             //Add method to the Methods file
                                             MethodsStringBuilderDictionary[checkText(page.Name) + sep + "Lists"].Append(
-                                                keypadobjectmethod(checkText(controls.Name)));
+                                                dpadobjectmethod(checkText(controls.Name)));
                                             break;
                                         }
                                         if (controls.Name.Contains("Keypad"))
@@ -1019,63 +1019,60 @@ namespace TP_XML_CSharp
             sb.AppendLineAndIndent();
             sb.Append(@"public void ");
             sb.Append(name);
-            sb.Append(@"DPad(VTSmartObject SmartObject, DPadButton Button, bool IsPressed)
+            sb.Append(@"(VTSmartObject SmartObject, DPadButton Button, bool IsPressed)
         {
-            if (ControlSystem._videoServer == null)
-            {
-                return;
-            }
+            
 
             switch (Button)
             {
                 case DPadButton.Center:
                     if (IsPressed)
                     {
-                        ControlSystem._videoServer.Enter();
+                        //ControlSystem._videoServer.Enter();
                     }
                     break;
 
                 case DPadButton.Down:
                     if (IsPressed)
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Down, CommandAction.Hold);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Down, CommandAction.Hold);
                     }
                     else
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Down, CommandAction.Release);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Down, CommandAction.Release);
                     }                    
                     break;
 
                 case DPadButton.Left:
                     if (IsPressed)
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Left, CommandAction.Hold);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Left, CommandAction.Hold);
                     }
                     else
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Left, CommandAction.Release);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Left, CommandAction.Release);
                     } 
                     break;
 
                 case DPadButton.Right:
                     if (IsPressed)
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Right, CommandAction.Hold);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Right, CommandAction.Hold);
                     }
                     else
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Right, CommandAction.Release);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Right, CommandAction.Release);
                     } 
                     break;
 
                 case DPadButton.Up:
                     if (IsPressed)
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Up, CommandAction.Hold);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Up, CommandAction.Hold);
                     }
                     else
                     {
-                        ControlSystem._videoServer.ArrowKey(ArrowDirections.Up, CommandAction.Release);
+                        //ControlSystem._videoServer.ArrowKey(ArrowDirections.Up, CommandAction.Release);
                     } 
                     break;
             }
