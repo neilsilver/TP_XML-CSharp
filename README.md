@@ -3,6 +3,8 @@
 
 This small Console Application creates C# / Simpl # classes for use in a Simpl# Pro Project
 
+This project is now deprecated due to reliance on an unavailable DLL from the original RAD Drivers SDK.
+
 
 
 ARCHITECTURE:
